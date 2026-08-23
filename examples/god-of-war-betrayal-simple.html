@@ -84,7 +84,70 @@
             z-index: 10;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
         }
-        .stat { margin: 4px 0; }
+        .stat { margin: 4px 0; display: flex; align-items: center; gap: 8px; }
+        #healthbar-outer {
+            width: 160px;
+            height: 16px;
+            background: #222;
+            border: 2px solid #d4af37;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        #healthbar-inner {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #e74c3c, #ff6b35);
+            transition: width 0.2s;
+        }
+        #controlsPanel {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 15px;
+            z-index: 15;
+            pointer-events: none;
+        }
+        .ctrl-group {
+            display: flex;
+            gap: 8px;
+            pointer-events: auto;
+        }
+        .ctrl-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(212, 175, 55, 0.15);
+            border: 2px solid #d4af37;
+            color: #d4af37;
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            transition: background 0.1s, transform 0.1s;
+        }
+        .ctrl-btn:active, .ctrl-btn.pressed {
+            background: rgba(212, 175, 55, 0.5);
+            transform: scale(0.92);
+        }
+        #attackBtn {
+            width: 72px;
+            height: 72px;
+            font-size: 26px;
+            background: rgba(139, 0, 0, 0.25);
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+        #attackBtn:active, #attackBtn.pressed {
+            background: rgba(139, 0, 0, 0.6);
+        }
         #combo {
             position: absolute;
             top: 15px;
@@ -134,10 +197,10 @@
         }
         #controls-hint {
             position: absolute;
-            bottom: 65px;
+            top: 100px;
             left: 15px;
             color: #999;
-            font-size: 12px;
+            font-size: 11px;
             z-index: 10;
         }
     </style>
@@ -146,14 +209,24 @@
     <div id="gameContainer">
         <div id="ground"></div>
         <div id="hud">
-            <div class="stat">❤️ Health: <span id="health">100</span></div>
+            <div class="stat">❤️ <span id="healthbar-outer"><span id="healthbar-inner"></span></span> <span id="health">100</span></div>
             <div class="stat">💀 Kills: <span id="kills">0</span></div>
             <div class="stat">🌊 Wave: <span id="waveNum">1</span></div>
         </div>
         <div id="combo"></div>
         <div id="wave"></div>
-        <div id="controls-hint">A/D: Move | W: Jump | Space: Attack (chain for combo)</div>
+        <div id="controls-hint">Keyboard: A/D move, W jump, Space attack — or use the buttons below</div>
         <div id="player">⚔️</div>
+        <div id="controlsPanel">
+            <div class="ctrl-group">
+                <div class="ctrl-btn" id="leftBtn">◀</div>
+                <div class="ctrl-btn" id="jumpBtn">▲</div>
+                <div class="ctrl-btn" id="rightBtn">▶</div>
+            </div>
+            <div class="ctrl-group">
+                <div class="ctrl-btn" id="attackBtn">⚔️</div>
+            </div>
+        </div>
         <div id="gameOver">
             <div>YOU HAVE FALLEN</div>
             <div id="finalScore" style="font-size: 18px; margin-top: 10px;"></div>
@@ -195,6 +268,23 @@
             if (key === 'd') controls.d = false;
             if (e.code === 'Space') controls.space = false;
         });
+
+        function bindHoldButton(id, onDown, onUp) {
+            const el = document.getElementById(id);
+            const start = (e) => { e.preventDefault(); el.classList.add('pressed'); onDown(); };
+            const end = (e) => { e.preventDefault(); el.classList.remove('pressed'); if (onUp) onUp(); };
+            el.addEventListener('mousedown', start);
+            el.addEventListener('touchstart', start, { passive: false });
+            el.addEventListener('mouseup', end);
+            el.addEventListener('mouseleave', end);
+            el.addEventListener('touchend', end);
+            el.addEventListener('touchcancel', end);
+        }
+
+        bindHoldButton('leftBtn', () => controls.a = true, () => controls.a = false);
+        bindHoldButton('rightBtn', () => controls.d = true, () => controls.d = false);
+        bindHoldButton('jumpBtn', () => { if (!game.player.jumping) { game.player.jumping = true; game.player.vy = JUMP_FORCE; } });
+        bindHoldButton('attackBtn', () => attack());
 
         function attack() {
             if (game.attackCooldown > 0 || game.gameOver) return;
@@ -322,7 +412,9 @@
             playerEl.style.bottom = (60 - game.player.y) + 'px';
             playerEl.classList.toggle('facing-left', game.player.facingLeft);
 
-            document.getElementById('health').textContent = Math.max(0, Math.round(game.player.health));
+            const healthPct = Math.max(0, Math.min(100, game.player.health));
+            document.getElementById('health').textContent = Math.round(healthPct);
+            document.getElementById('healthbar-inner').style.width = healthPct + '%';
             document.getElementById('kills').textContent = game.kills;
             document.getElementById('waveNum').textContent = game.wave;
 
