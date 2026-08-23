@@ -21,8 +21,11 @@ async function main() {
     process.exit(0);
   }
 
-  const userId = args[0];
+  let userId = args[0];
   const options = parseOptions(args.slice(1));
+
+  // Extract username from Tellonym URL if provided
+  userId = extractUserIdFromUrl(userId);
 
   // Set auth token if provided
   if (options.token) {
@@ -99,6 +102,24 @@ async function main() {
     console.error(`Error: ${error.message}`);
     process.exit(1);
   }
+}
+
+/**
+ * Extract user ID from Tellonym URL or return as-is if already a user ID
+ * @param {string} input - URL or user ID
+ * @returns {string} User ID
+ */
+function extractUserIdFromUrl(input) {
+  if (!input) return input;
+
+  // Match URLs like https://tellonym.me/username or https://tellonym.me/user.123456
+  const urlMatch = input.match(/(?:https?:\/\/)?(?:www\.)?tellonym\.me\/([^\/?#]+)/i);
+  if (urlMatch) {
+    return urlMatch[1];
+  }
+
+  // Return as-is if not a URL
+  return input;
 }
 
 function parseOptions(args) {
