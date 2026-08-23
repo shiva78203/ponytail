@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warrior - Simple Action Game</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #111;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #0f3460 100%);
+            border: 3px solid #d4af37;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+        }
+        #player, .enemy {
+            position: absolute;
+            width: 40px;
+            height: 60px;
+            background: #e74c3c;
+            border: 2px solid #c0392b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 12px;
+        }
+        .enemy { background: #8b0000; border-color: #660000; }
+        .enemy.hit { animation: hit 0.2s; }
+        @keyframes hit { 0% { transform: scale(0.9); } 100% { transform: scale(1); } }
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #d4af37;
+            font-size: 18px;
+            z-index: 10;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        .stat { margin: 5px 0; }
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border: 3px solid #d4af37;
+            text-align: center;
+            color: #d4af37;
+            font-size: 24px;
+            display: none;
+            z-index: 100;
+        }
+        #gameOver button {
+            margin-top: 20px;
+            padding: 10px 30px;
+            background: #d4af37;
+            border: none;
+            color: #111;
+            font-size: 18px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="hud">
+            <div class="stat">❤️ Health: <span id="health">100</span></div>
+            <div class="stat">⚔️ Kills: <span id="kills">0</span></div>
+            <div class="stat">📊 Score: <span id="score">0</span></div>
+            <div class="stat" style="margin-top: 20px; font-size: 12px;">WASD: Move | Space: Attack</div>
+        </div>
+        <div id="player"></div>
+        <div id="gameOver">
+            <div>GAME OVER</div>
+            <div id="finalScore" style="font-size: 18px; margin-top: 10px;"></div>
+            <button onclick="location.reload()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const game = {
+            player: { x: 380, y: 250, width: 40, height: 60, health: 100, maxHealth: 100 },
+            enemies: [],
+            keys: {},
+            score: 0,
+            kills: 0,
+            gameOver: false,
+            wave: 1
+        };
+
+        const controls = { w: false, a: false, s: false, d: false, space: false };
+
+        window.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            if (key === 'w') controls.w = true;
+            if (key === 'a') controls.a = true;
+            if (key === 's') controls.s = true;
+            if (key === 'd') controls.d = true;
+            if (e.code === 'Space') { controls.space = true; e.preventDefault(); }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            if (key === 'w') controls.w = false;
+            if (key === 'a') controls.a = false;
+            if (key === 's') controls.s = false;
+            if (key === 'd') controls.d = false;
+            if (e.code === 'Space') controls.space = false;
+        });
+
+        function spawnEnemy() {
+            const side = Math.random() > 0.5;
+            const enemy = {
+                x: side ? Math.random() * 400 : Math.random() > 0.5 ? 0 : 760,
+                y: Math.random() * 540,
+                width: 40,
+                height: 60,
+                health: 30,
+                maxHealth: 30,
+                vx: (Math.random() - 0.5) * 3,
+                vy: (Math.random() - 0.5) * 3,
+                cooldown: 0
+            };
+            game.enemies.push(enemy);
+        }
+
+        function updatePlayer() {
+            const speed = 5;
+            if (controls.w && game.player.y > 0) game.player.y -= speed;
+            if (controls.s && game.player.y < 540) game.player.y += speed;
+            if (controls.a && game.player.x > 0) game.player.x -= speed;
+            if (controls.d && game.player.x < 760) game.player.x += speed;
+
+            if (controls.space) {
+                game.enemies.forEach(enemy => {
+                    const dx = enemy.x - game.player.x;
+                    const dy = enemy.y - game.player.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 80) {
+                        enemy.health -= 10;
+                        enemy.element?.classList.add('hit');
+                        setTimeout(() => enemy.element?.classList.remove('hit'), 200);
+                    }
+                });
+            }
+        }
+
+        function updateEnemies() {
+            game.enemies = game.enemies.filter(enemy => {
+                enemy.x += enemy.vx;
+                enemy.y += enemy.vy;
+
+                if (enemy.x < 0 || enemy.x > 760) enemy.vx *= -1;
+                if (enemy.y < 0 || enemy.y > 540) enemy.vy *= -1;
+
+                const dx = game.player.x - enemy.x;
+                const dy = game.player.y - enemy.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 50) {
+                    game.player.health -= 1;
+                }
+
+                if (enemy.health <= 0) {
+                    enemy.element?.remove();
+                    game.kills++;
+                    game.score += 50;
+                    if (game.kills % 5 === 0) game.wave++;
+                    return false;
+                }
+
+                return true;
+            });
+        }
+
+        function render() {
+            document.getElementById('player').style.left = game.player.x + 'px';
+            document.getElementById('player').style.top = game.player.y + 'px';
+            document.getElementById('player').textContent = '⚔️';
+            document.getElementById('health').textContent = game.player.health;
+            document.getElementById('kills').textContent = game.kills;
+            document.getElementById('score').textContent = game.score;
+
+            const container = document.getElementById('gameContainer');
+
+            game.enemies.forEach((enemy, idx) => {
+                if (!enemy.element) {
+                    enemy.element = document.createElement('div');
+                    enemy.element.className = 'enemy';
+                    enemy.element.textContent = '🛡️';
+                    container.appendChild(enemy.element);
+                }
+                enemy.element.style.left = enemy.x + 'px';
+                enemy.element.style.top = enemy.y + 'px';
+            });
+        }
+
+        function gameLoop() {
+            if (game.gameOver) return;
+
+            updatePlayer();
+            updateEnemies();
+            render();
+
+            if (game.score % 100 === 0 && game.score > 0 && Math.random() < 0.01 * game.wave) {
+                spawnEnemy();
+            }
+
+            if (game.enemies.length < game.wave) {
+                spawnEnemy();
+            }
+
+            if (game.player.health <= 0) {
+                game.gameOver = true;
+                document.getElementById('gameOver').style.display = 'block';
+                document.getElementById('finalScore').textContent = `Score: ${game.score} | Kills: ${game.kills}`;
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start game
+        for (let i = 0; i < 2; i++) spawnEnemy();
+        gameLoop();
+    </script>
+</body>
+</html>
