@@ -52,6 +52,32 @@ struct Vertex {
     float x, y, z;
 };
 
+/* PSP GU_COLOR_8888 is packed as 0xAABBGGRR — build colors from real RGB so
+   the palette below means what it says instead of coming out byte-swapped. */
+#define RGBA(r, g, b, a) \
+    (((unsigned int)(a) << 24) | ((unsigned int)(b) << 16) | \
+     ((unsigned int)(g) << 8)  |  (unsigned int)(r))
+#define RGB(r, g, b) RGBA(r, g, b, 255)
+
+/* ---- Greek-temple palette ---- */
+#define COL_FLOOR        RGB(96, 74, 52)
+#define COL_FLOOR_LINE   RGB(62, 46, 30)
+#define COL_MARBLE       RGB(196, 178, 142)
+#define COL_MARBLE_VEIN  RGB(140, 118, 82)
+#define COL_BRONZE       RGB(184, 126, 54)
+#define COL_BRONZE_DARK  RGB(120, 80, 34)
+#define COL_CAPE         RGB(150, 28, 20)
+#define COL_CAPE_DARK    RGB(104, 18, 14)
+#define COL_STEEL        RGB(96, 104, 114)
+#define COL_STEEL_DARK   RGB(60, 66, 74)
+#define COL_BRUTE        RGB(104, 62, 32)
+#define COL_BRUTE_HORN   RGB(214, 202, 178)
+#define COL_ORB          RGB(70, 210, 130)
+#define COL_SLASH        RGB(255, 196, 64)
+#define COL_HEALTHBAR_BG RGB(40, 34, 28)
+#define COL_HEALTHBAR_FG RGB(196, 60, 40)
+#define COL_WHITE_FLASH  RGB(255, 255, 255)
+
 static void drawRect(float x, float y, float w, float h, unsigned int color) {
     struct Vertex *v = (struct Vertex *)sceGuGetMemory(6 * sizeof(struct Vertex));
     v[0] = (struct Vertex){ color, x,     y,     0.0f };
@@ -63,11 +89,28 @@ static void drawRect(float x, float y, float w, float h, unsigned int color) {
     sceGuDrawArray(GU_TRIANGLES, GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_2D, 6, 0, v);
 }
 
+static void drawTri(float x1, float y1, float x2, float y2, float x3, float y3, unsigned int color) {
+    struct Vertex *v = (struct Vertex *)sceGuGetMemory(3 * sizeof(struct Vertex));
+    v[0] = (struct Vertex){ color, x1, y1, 0.0f };
+    v[1] = (struct Vertex){ color, x2, y2, 0.0f };
+    v[2] = (struct Vertex){ color, x3, y3, 0.0f };
+    sceGuDrawArray(GU_TRIANGLES, GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_2D, 3, 0, v);
+}
+
+/* Decorative temple-floor pillar base: seen from above as a marble slab
+   with a darker cross inlay. Purely visual, no collision. */
+static void drawPillarBase(float cx, float cy) {
+    drawRect(cx - 14, cy - 14, 28, 28, COL_MARBLE);
+    drawRect(cx - 14, cy - 2, 28, 4, COL_MARBLE_VEIN);
+    drawRect(cx - 2, cy - 14, 4, 28, COL_MARBLE_VEIN);
+}
+
 /* ---------------- Game state ---------------- */
 typedef enum { STATE_TITLE, STATE_PLAYING, STATE_GAMEOVER } GameState;
 
 typedef struct {
     int active;
+    int isBrute;
     float x, y;
     float health, maxHealth;
     float speed;
@@ -140,12 +183,22 @@ static void spawnEnemy(void) {
                 case 2: x = randRange(20, SCR_WIDTH - 20); y = -16; break;
                 default: x = randRange(20, SCR_WIDTH - 20); y = SCR_HEIGHT + 16; break;
             }
+            int bruteChance = wave >= 2 ? (10 + wave * 3) : 0;
+            if (bruteChance > 45) bruteChance = 45;
+            int brute = (int)(nextRand() % 100) < bruteChance;
+
             enemies[i].active = 1;
+            enemies[i].isBrute = brute;
             enemies[i].x = x;
             enemies[i].y = y;
-            enemies[i].maxHealth = 25.0f + wave * 4.0f;
+            if (brute) {
+                enemies[i].maxHealth = 55.0f + wave * 6.0f;
+                enemies[i].speed = 0.35f + wave * 0.02f;
+            } else {
+                enemies[i].maxHealth = 25.0f + wave * 4.0f;
+                enemies[i].speed = 0.55f + wave * 0.04f;
+            }
             enemies[i].health = enemies[i].maxHealth;
-            enemies[i].speed = 0.55f + wave * 0.04f;
             enemies[i].hitFlash = 0;
             enemies[i].attackCooldown = 0;
             return;
@@ -255,11 +308,13 @@ static void updatePlaying(SceCtrlData *pad) {
         float ex = player.x - enemies[i].x;
         float ey = player.y - enemies[i].y;
         float dist = (float)__builtin_sqrtf(ex * ex + ey * ey);
-        if (dist > 18.0f) {
+        float contactRange = enemies[i].isBrute ? 24.0f : 18.0f;
+        float touchDmg = enemies[i].isBrute ? 14.0f : 8.0f;
+        if (dist > contactRange) {
             enemies[i].x += (ex / dist) * enemies[i].speed;
             enemies[i].y += (ey / dist) * enemies[i].speed;
         } else if (enemies[i].attackCooldown <= 0 && player.invuln <= 0) {
-            player.health -= 8.0f;
+            player.health -= touchDmg;
             player.invuln = 40;
             enemies[i].attackCooldown = 50;
         }
@@ -290,37 +345,62 @@ static void updatePlaying(SceCtrlData *pad) {
     if (player.health <= 0) state = STATE_GAMEOVER;
 }
 
+/* Fixed decorative pillar-base positions — purely visual, no collision */
+static const float pillarX[4] = { 70.0f, 410.0f, 70.0f, 410.0f };
+static const float pillarY[4] = { 60.0f, 60.0f, 212.0f, 212.0f };
+
 static void renderPlaying(void) {
-    /* arena floor */
-    drawRect(0, 0, SCR_WIDTH, SCR_HEIGHT, 0xFF241812);
-    for (int i = 0; i < 12; i++) drawRect(i * 44.0f, 0, 2, SCR_HEIGHT, 0xFF3a2a1e);
+    /* stone temple floor */
+    drawRect(0, 0, SCR_WIDTH, SCR_HEIGHT, COL_FLOOR);
+    for (int i = 0; i < 12; i++) drawRect(i * 44.0f, 0, 2, SCR_HEIGHT, COL_FLOOR_LINE);
+    for (int i = 0; i < 7; i++) drawRect(0, i * 44.0f, SCR_WIDTH, 2, COL_FLOOR_LINE);
+    for (int i = 0; i < 4; i++) drawPillarBase(pillarX[i], pillarY[i]);
 
     for (int i = 0; i < MAX_ORBS; i++) {
         if (!orbs[i].active) continue;
-        drawRect(orbs[i].x - 4, orbs[i].y - 4, 8, 8, 0xFF40D080);
+        drawRect(orbs[i].x - 4, orbs[i].y - 4, 8, 8, COL_ORB);
     }
 
     for (int i = 0; i < MAX_ENEMIES; i++) {
         if (!enemies[i].active) continue;
-        unsigned int col = enemies[i].hitFlash > 0 ? 0xFFFFFFFF : 0xFF2020C8;
-        drawRect(enemies[i].x - 9, enemies[i].y - 14, 18, 28, col);
+        int flash = enemies[i].hitFlash > 0;
+
+        if (enemies[i].isBrute) {
+            unsigned int col = flash ? COL_WHITE_FLASH : COL_BRUTE;
+            drawRect(enemies[i].x - 13, enemies[i].y - 20, 26, 40, col);
+            /* horns */
+            if (!flash) {
+                drawTri(enemies[i].x - 13, enemies[i].y - 20, enemies[i].x - 13, enemies[i].y - 30, enemies[i].x - 4, enemies[i].y - 20, COL_BRUTE_HORN);
+                drawTri(enemies[i].x + 13, enemies[i].y - 20, enemies[i].x + 13, enemies[i].y - 30, enemies[i].x + 4, enemies[i].y - 20, COL_BRUTE_HORN);
+            }
+        } else {
+            unsigned int col = flash ? COL_WHITE_FLASH : COL_STEEL;
+            drawRect(enemies[i].x - 9, enemies[i].y - 14, 18, 28, col);
+            if (!flash) drawRect(enemies[i].x - 9, enemies[i].y - 14, 18, 6, COL_STEEL_DARK);
+        }
+
         /* health bar */
         float pct = enemies[i].health / enemies[i].maxHealth;
         if (pct < 0) pct = 0;
-        drawRect(enemies[i].x - 10, enemies[i].y - 22, 20, 3, 0xFF202020);
-        drawRect(enemies[i].x - 10, enemies[i].y - 22, 20 * pct, 3, 0xFF2020E8);
+        float barW = enemies[i].isBrute ? 30.0f : 20.0f;
+        float barY = enemies[i].isBrute ? enemies[i].y - 34.0f : enemies[i].y - 22.0f;
+        drawRect(enemies[i].x - barW / 2, barY, barW, 3, COL_HEALTHBAR_BG);
+        drawRect(enemies[i].x - barW / 2, barY, barW * pct, 3, COL_HEALTHBAR_FG);
     }
 
-    /* player */
-    unsigned int pcol = (player.invuln > 0 && (player.invuln / 4) % 2 == 0) ? 0xFF8080FF : 0xFF3050E0;
-    drawRect(player.x - 8, player.y - 15, 16, 30, pcol);
-    /* tattoo/accent stripe */
-    drawRect(player.x - 8 + (player.facing == 1 ? 0 : 12), player.y - 15, 4, 30, 0xFF2030A8);
+    /* player: bronze-armored warrior with a trailing cape and helm crest */
+    int flashHit = player.invuln > 0 && (player.invuln / 4) % 2 == 0;
+    float capeX = player.facing == 1 ? player.x - 10 : player.x + 2;
+    drawRect(capeX, player.y - 13, 8, 26, flashHit ? COL_WHITE_FLASH : COL_CAPE_DARK);
+    drawRect(player.x - 8, player.y - 15, 16, 30, flashHit ? COL_WHITE_FLASH : COL_BRONZE);
+    drawRect(player.x - 8, player.y - 15, 16, 6, flashHit ? COL_WHITE_FLASH : COL_BRONZE_DARK);
+    /* helm crest */
+    drawTri(player.x - 6, player.y - 15, player.x + 6, player.y - 15, player.x, player.y - 24, flashHit ? COL_WHITE_FLASH : COL_CAPE);
 
     if (player.attackAnim > 0) {
         float reach = (player.comboStep == 0 ? 42.0f : 32.0f);
         float sx = player.facing == 1 ? player.x + 8 : player.x - 8 - reach;
-        drawRect(sx, player.y - 12, reach, 6, 0xFF30D0FF);
+        drawRect(sx, player.y - 12, reach, 6, COL_SLASH);
     }
 
     pspDebugScreenSetXY(1, 1);
@@ -330,7 +410,9 @@ static void renderPlaying(void) {
 }
 
 static void renderTitle(void) {
-    drawRect(0, 0, SCR_WIDTH, SCR_HEIGHT, 0xFF1a1210);
+    drawRect(0, 0, SCR_WIDTH, SCR_HEIGHT, RGB(26, 16, 12));
+    for (int i = 0; i < 4; i++) drawPillarBase(pillarX[i], pillarY[i]);
+    drawTri(SCR_WIDTH / 2 - 10, 190, SCR_WIDTH / 2 + 10, 190, SCR_WIDTH / 2, 172, COL_CAPE);
     pspDebugScreenSetXY(14, 8);
     pspDebugScreenPrintf("E M B E R   B L A D E");
     pspDebugScreenSetXY(10, 11);
@@ -342,7 +424,7 @@ static void renderTitle(void) {
 }
 
 static void renderGameOver(void) {
-    drawRect(0, 0, SCR_WIDTH, SCR_HEIGHT, 0xFF100808);
+    drawRect(0, 0, SCR_WIDTH, SCR_HEIGHT, RGB(18, 8, 8));
     pspDebugScreenSetXY(14, 9);
     pspDebugScreenPrintf("YOU HAVE FALLEN");
     pspDebugScreenSetXY(14, 11);
