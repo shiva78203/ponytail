@@ -9,12 +9,57 @@
   html, body { background: #000; height: 100%; overflow: hidden; font-family: 'Georgia', serif; }
   body { display: flex; justify-content: center; align-items: center; }
   #wrap { position: relative; width: min(96vw, 1280px); aspect-ratio: 16/9; }
-  canvas { width: 100%; height: 100%; display: block; background: #000; border: 2px solid #3a2a1a; }
+  canvas { width: 100%; height: 100%; display: block; background: #000; border: 2px solid #3a2a1a; touch-action: none; }
+
+  #touchControls {
+    position: absolute; inset: 0;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 0 2%;
+    pointer-events: none;
+    z-index: 20;
+  }
+  .tc-group { display: flex; gap: 2%; pointer-events: auto; margin-bottom: 3%; }
+  .tc-btn {
+    width: clamp(44px, 8vw, 68px);
+    height: clamp(44px, 8vw, 68px);
+    border-radius: 50%;
+    background: rgba(212, 175, 55, 0.14);
+    border: 2px solid #d4af37;
+    color: #d4af37;
+    font-family: 'Georgia', serif;
+    font-weight: bold;
+    font-size: clamp(14px, 2.4vw, 22px);
+    display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    cursor: pointer;
+    transition: background 0.08s, transform 0.08s;
+  }
+  .tc-btn.pressed { background: rgba(212, 175, 55, 0.5); transform: scale(0.9); }
+  .tc-attack { border-color: #ff5500; color: #ff5500; background: rgba(255, 85, 0, 0.12); }
+  .tc-attack.pressed { background: rgba(255, 85, 0, 0.5); }
+  .tc-magic { border-color: #0066ff; color: #4fa6ff; background: rgba(0, 102, 255, 0.12); }
+  .tc-magic.pressed { background: rgba(0, 102, 255, 0.5); }
+  .tc-execute { border-color: #cc0000; color: #ff4d4d; background: rgba(204, 0, 0, 0.12); }
+  .tc-execute.pressed { background: rgba(204, 0, 0, 0.5); }
 </style>
 </head>
 <body>
 <div id="wrap">
   <canvas id="game" width="960" height="540"></canvas>
+
+  <div id="touchControls">
+    <div class="tc-group">
+      <div class="tc-btn" id="btnLeft">◀</div>
+      <div class="tc-btn" id="btnRight">▶</div>
+      <div class="tc-btn" id="btnJump">⤒</div>
+    </div>
+    <div class="tc-group">
+      <div class="tc-btn tc-attack" id="btnAttack">J</div>
+      <div class="tc-btn tc-magic" id="btnMagic">K</div>
+      <div class="tc-btn tc-execute" id="btnExecute">E</div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -84,6 +129,17 @@ class InputManager {
   isDown(k) { return !!this.keys[k]; }
   // consume() clears the flag so a single keypress fires exactly once
   consume(k) { const v = !!this.justPressed[k]; this.justPressed[k] = false; return v; }
+
+  // Touch/click bridge — on-screen buttons drive the same key state as the keyboard
+  simulateHold(key, isDown) {
+    if (isDown && !this.keys[key]) this.justPressed[key] = true;
+    this.keys[key] = isDown;
+  }
+  simulateTap(key) {
+    this.keys[key] = true;
+    this.justPressed[key] = true;
+    setTimeout(() => { this.keys[key] = false; }, 60);
+  }
 
   moveLeft() { return this.isDown('arrowleft') || this.isDown('a'); }
   moveRight() { return this.isDown('arrowright') || this.isDown('d'); }
@@ -1119,6 +1175,33 @@ class GameEngine {
 const canvas = document.getElementById('game');
 const engine = new GameEngine(canvas);
 engine.start();
+
+/* ---- On-screen touch/click controls, bridged into InputManager ---- */
+function bindHoldButton(id, key) {
+  const el = document.getElementById(id);
+  const press = (e) => { e.preventDefault(); el.classList.add('pressed'); engine.input.simulateHold(key, true); };
+  const release = (e) => { e.preventDefault(); el.classList.remove('pressed'); engine.input.simulateHold(key, false); };
+  el.addEventListener('pointerdown', press);
+  el.addEventListener('pointerup', release);
+  el.addEventListener('pointerleave', release);
+  el.addEventListener('pointercancel', release);
+}
+function bindTapButton(id, key) {
+  const el = document.getElementById(id);
+  el.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    el.classList.add('pressed');
+    engine.input.simulateTap(key);
+    setTimeout(() => el.classList.remove('pressed'), 100);
+  });
+}
+
+bindHoldButton('btnLeft', 'arrowleft');
+bindHoldButton('btnRight', 'arrowright');
+bindTapButton('btnJump', 'w');
+bindTapButton('btnAttack', 'j');
+bindTapButton('btnMagic', 'k');
+bindTapButton('btnExecute', 'e');
 </script>
 </body>
 </html>
