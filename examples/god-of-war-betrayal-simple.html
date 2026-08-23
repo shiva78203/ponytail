@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Betrayal - Side-Scrolling Brawler</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #000;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #gameContainer {
+            position: relative;
+            width: 900px;
+            height: 500px;
+            background: linear-gradient(180deg, #2c1810 0%, #1a0f08 60%, #3d2817 100%);
+            border: 4px solid #8b0000;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(139, 0, 0, 0.5);
+        }
+        #ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 60px;
+            background: #4a3728;
+            border-top: 3px solid #8b0000;
+        }
+        #player {
+            position: absolute;
+            width: 50px;
+            height: 80px;
+            font-size: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s;
+            z-index: 5;
+        }
+        #player.facing-left { transform: scaleX(-1); }
+        #player.attacking { animation: attack 0.25s; }
+        @keyframes attack {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.3) rotate(-15deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        .enemy {
+            position: absolute;
+            width: 45px;
+            height: 75px;
+            font-size: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .enemy.hit { animation: hitFlash 0.15s; }
+        @keyframes hitFlash {
+            0% { filter: brightness(3) saturate(3); transform: scale(0.85); }
+            100% { filter: brightness(1); transform: scale(1); }
+        }
+        .healthbar-bg {
+            position: absolute;
+            width: 45px;
+            height: 5px;
+            background: #333;
+            top: -10px;
+        }
+        .healthbar-fill {
+            height: 100%;
+            background: #e74c3c;
+            transition: width 0.2s;
+        }
+        #hud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: #d4af37;
+            font-size: 16px;
+            z-index: 10;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+        }
+        .stat { margin: 4px 0; }
+        #combo {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: #ff6b35;
+            font-size: 22px;
+            font-weight: bold;
+            z-index: 10;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+            display: none;
+        }
+        #wave {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #d4af37;
+            font-size: 40px;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
+            display: none;
+            z-index: 20;
+        }
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.92);
+            padding: 40px;
+            border: 3px solid #8b0000;
+            text-align: center;
+            color: #d4af37;
+            font-size: 26px;
+            display: none;
+            z-index: 100;
+        }
+        #gameOver button {
+            margin-top: 20px;
+            padding: 10px 30px;
+            background: #8b0000;
+            border: none;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #controls-hint {
+            position: absolute;
+            bottom: 65px;
+            left: 15px;
+            color: #999;
+            font-size: 12px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="ground"></div>
+        <div id="hud">
+            <div class="stat">❤️ Health: <span id="health">100</span></div>
+            <div class="stat">💀 Kills: <span id="kills">0</span></div>
+            <div class="stat">🌊 Wave: <span id="waveNum">1</span></div>
+        </div>
+        <div id="combo"></div>
+        <div id="wave"></div>
+        <div id="controls-hint">A/D: Move | W: Jump | Space: Attack (chain for combo)</div>
+        <div id="player">⚔️</div>
+        <div id="gameOver">
+            <div>YOU HAVE FALLEN</div>
+            <div id="finalScore" style="font-size: 18px; margin-top: 10px;"></div>
+            <button onclick="location.reload()">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        const game = {
+            player: { x: 420, y: 0, width: 50, height: 80, health: 100, jumping: false, vy: 0, facingLeft: false },
+            enemies: [],
+            kills: 0,
+            wave: 1,
+            enemiesPerWave: 3,
+            enemiesSpawned: 0,
+            gameOver: false,
+            comboCount: 0,
+            comboTimer: 0,
+            attackCooldown: 0
+        };
+
+        const GROUND_Y = 0;
+        const GRAVITY = 0.8;
+        const JUMP_FORCE = -15;
+
+        const controls = { a: false, d: false, w: false, space: false };
+
+        window.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            if (key === 'a') controls.a = true;
+            if (key === 'd') controls.d = true;
+            if (key === 'w' && !game.player.jumping) { game.player.jumping = true; game.player.vy = JUMP_FORCE; }
+            if (e.code === 'Space') { controls.space = true; e.preventDefault(); attack(); }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            if (key === 'a') controls.a = false;
+            if (key === 'd') controls.d = false;
+            if (e.code === 'Space') controls.space = false;
+        });
+
+        function attack() {
+            if (game.attackCooldown > 0 || game.gameOver) return;
+            game.attackCooldown = 20;
+
+            const playerEl = document.getElementById('player');
+            playerEl.classList.add('attacking');
+            setTimeout(() => playerEl.classList.remove('attacking'), 250);
+
+            let hitSomething = false;
+            game.enemies.forEach(enemy => {
+                const dx = enemy.x - game.player.x;
+                const dy = Math.abs(enemy.y - game.player.y);
+                const facingRight = !game.player.facingLeft;
+                const inRange = Math.abs(dx) < 70 && dy < 40;
+                const correctDirection = (facingRight && dx > -20) || (!facingRight && dx < 20);
+
+                if (inRange && correctDirection) {
+                    const damage = 10 + Math.min(game.comboCount, 5) * 3;
+                    enemy.health -= damage;
+                    enemy.element?.classList.add('hit');
+                    setTimeout(() => enemy.element?.classList.remove('hit'), 150);
+                    hitSomething = true;
+                }
+            });
+
+            if (hitSomething) {
+                game.comboCount++;
+                game.comboTimer = 90;
+                const comboEl = document.getElementById('combo');
+                comboEl.style.display = 'block';
+                comboEl.textContent = game.comboCount > 1 ? `${game.comboCount}x COMBO!` : '';
+            }
+        }
+
+        function spawnEnemy() {
+            const fromLeft = Math.random() > 0.5;
+            const enemy = {
+                x: fromLeft ? -50 : 950,
+                y: 0,
+                width: 45,
+                height: 75,
+                health: 40,
+                maxHealth: 40,
+                speed: 1.2 + game.wave * 0.15,
+                attackCooldown: 0
+            };
+            game.enemies.push(enemy);
+            game.enemiesSpawned++;
+        }
+
+        function updatePlayer() {
+            const speed = 5;
+            if (controls.a) { game.player.x -= speed; game.player.facingLeft = true; }
+            if (controls.d) { game.player.x += speed; game.player.facingLeft = false; }
+            game.player.x = Math.max(0, Math.min(850, game.player.x));
+
+            if (game.player.jumping) {
+                game.player.y += game.player.vy;
+                game.player.vy += GRAVITY;
+                if (game.player.y >= GROUND_Y) {
+                    game.player.y = GROUND_Y;
+                    game.player.jumping = false;
+                    game.player.vy = 0;
+                }
+            }
+
+            if (game.attackCooldown > 0) game.attackCooldown--;
+
+            if (game.comboTimer > 0) {
+                game.comboTimer--;
+                if (game.comboTimer === 0) {
+                    game.comboCount = 0;
+                    document.getElementById('combo').style.display = 'none';
+                }
+            }
+        }
+
+        function updateEnemies() {
+            game.enemies = game.enemies.filter(enemy => {
+                const dx = game.player.x - enemy.x;
+                if (Math.abs(dx) > 55) {
+                    enemy.x += Math.sign(dx) * enemy.speed;
+                }
+
+                if (Math.abs(dx) < 55 && enemy.attackCooldown <= 0) {
+                    game.player.health -= 5;
+                    enemy.attackCooldown = 60;
+                }
+                if (enemy.attackCooldown > 0) enemy.attackCooldown--;
+
+                if (enemy.health <= 0) {
+                    enemy.element?.remove();
+                    game.kills++;
+                    return false;
+                }
+                return true;
+            });
+
+            if (game.enemies.length === 0 && game.enemiesSpawned >= game.enemiesPerWave) {
+                nextWave();
+            }
+        }
+
+        function nextWave() {
+            game.wave++;
+            game.enemiesPerWave = 3 + game.wave;
+            game.enemiesSpawned = 0;
+
+            const waveEl = document.getElementById('wave');
+            waveEl.textContent = `WAVE ${game.wave}`;
+            waveEl.style.display = 'block';
+            setTimeout(() => waveEl.style.display = 'none', 1500);
+
+            game.player.health = Math.min(100, game.player.health + 20);
+
+            setTimeout(() => {
+                for (let i = 0; i < Math.min(2, game.enemiesPerWave); i++) spawnEnemy();
+            }, 1500);
+        }
+
+        function render() {
+            const playerEl = document.getElementById('player');
+            playerEl.style.left = game.player.x + 'px';
+            playerEl.style.bottom = (60 - game.player.y) + 'px';
+            playerEl.classList.toggle('facing-left', game.player.facingLeft);
+
+            document.getElementById('health').textContent = Math.max(0, Math.round(game.player.health));
+            document.getElementById('kills').textContent = game.kills;
+            document.getElementById('waveNum').textContent = game.wave;
+
+            const container = document.getElementById('gameContainer');
+
+            game.enemies.forEach(enemy => {
+                if (!enemy.element) {
+                    enemy.element = document.createElement('div');
+                    enemy.element.className = 'enemy';
+                    enemy.element.textContent = '👹';
+
+                    const bg = document.createElement('div');
+                    bg.className = 'healthbar-bg';
+                    const fill = document.createElement('div');
+                    fill.className = 'healthbar-fill';
+                    bg.appendChild(fill);
+                    enemy.element.appendChild(bg);
+                    enemy.healthFill = fill;
+
+                    container.appendChild(enemy.element);
+                }
+                enemy.element.style.left = enemy.x + 'px';
+                enemy.element.style.bottom = '60px';
+                enemy.healthFill.style.width = (enemy.health / enemy.maxHealth * 100) + '%';
+            });
+        }
+
+        function gameLoop() {
+            if (game.gameOver) return;
+
+            updatePlayer();
+            updateEnemies();
+            render();
+
+            if (game.player.health <= 0) {
+                game.gameOver = true;
+                document.getElementById('gameOver').style.display = 'block';
+                document.getElementById('finalScore').textContent = `Wave ${game.wave} | Kills: ${game.kills}`;
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        spawnEnemy();
+        spawnEnemy();
+        gameLoop();
+    </script>
+</body>
+</html>
