@@ -1,207 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EnergiTech Power Insights LLP - Letterhead</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnergiTech Power Insights LLP - Letterhead</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
-            padding: 20px;
-        }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #e9e9e9;
+    padding: 24px;
+  }
 
-        .page {
-            width: 210mm;
-            height: 297mm;
-            background-color: white;
-            margin: 0 auto;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-        }
+  .page {
+    width: 210mm;
+    min-height: 148mm;
+    background-color: #ffffff;
+    margin: 0 auto;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    padding: 30px 46px 22px;
+  }
 
-        .header {
-            padding: 40px 50px;
-            border-bottom: 3px solid #003d82;
-            display: flex;
-            align-items: flex-start;
-            gap: 30px;
-        }
+  /* ---- header row: logo + contact block ---- */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 34px;
+  }
 
-        .logo-section {
-            flex-shrink: 0;
-        }
+  .logo-wrap {
+    flex-shrink: 0;
+    margin-right: auto;
+  }
 
-        .logo {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #003d82 0%, #0066cc 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 18px;
-            text-align: center;
-            box-shadow: 0 2px 6px rgba(0, 61, 130, 0.3);
-        }
+  .contact {
+    text-align: center;
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: #111111;
+  }
 
-        .company-info {
-            flex-grow: 1;
-        }
+  .contact .email { letter-spacing: 0.2px; }
+  .contact .phones { letter-spacing: 0.2px; }
+  .contact .addr-line { white-space: nowrap; }
 
-        .company-name {
-            font-size: 28px;
-            font-weight: 700;
-            color: #003d82;
-            margin-bottom: 5px;
-            letter-spacing: 0.5px;
-        }
+  /* ---- company name band ---- */
+  .brand {
+    margin-top: 22px;
+  }
 
-        .company-tagline {
-            font-size: 12px;
-            color: #0066cc;
-            font-weight: 500;
-            margin-bottom: 15px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
+  .brand-name {
+    font-size: 34px;
+    font-weight: 800;
+    color: #cc0000;
+    letter-spacing: 0.3px;
+    font-family: Georgia, 'Times New Roman', serif;
+  }
 
-        .contact-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px 25px;
-            font-size: 11px;
-            color: #333;
-        }
+  /* ---- divider rule ---- */
+  .rule {
+    margin-top: 10px;
+    display: flex;
+    align-items: stretch;
+    height: 14px;
+  }
 
-        .contact-item {
-            display: flex;
-            gap: 8px;
-        }
+  .rule .tick {
+    width: 2px;
+    background-color: #111111;
+    margin-right: 8px;
+  }
 
-        .contact-label {
-            font-weight: 600;
-            color: #003d82;
-            min-width: 50px;
-        }
+  .rule .line {
+    flex-grow: 1;
+    align-self: center;
+    height: 2px;
+    background-color: #3f7fc1;
+  }
 
-        .content {
-            flex-grow: 1;
-            padding: 50px;
-        }
+  /* ---- footer credentials line ---- */
+  .credentials {
+    margin-top: 8px;
+    font-size: 10.5px;
+    color: #111111;
+    text-align: center;
+    letter-spacing: 0.1px;
+  }
 
-        .footer {
-            padding: 30px 50px;
-            border-top: 1px solid #e0e0e0;
-            background-color: #f9f9f9;
-            font-size: 9px;
-            color: #666;
-            line-height: 1.6;
-        }
+  @media print {
+    body { padding: 0; background-color: #ffffff; }
+    .page { box-shadow: none; margin: 0; width: 100%; }
+  }
 
-        .footer-section {
-            display: flex;
-            justify-content: space-between;
-            gap: 40px;
-        }
-
-        .footer-item {
-            flex: 1;
-        }
-
-        .footer-title {
-            font-weight: 600;
-            color: #003d82;
-            margin-bottom: 5px;
-        }
-
-        @media print {
-            body {
-                padding: 0;
-                background-color: white;
-            }
-
-            .page {
-                box-shadow: none;
-                margin: 0;
-                width: 100%;
-                height: 100%;
-            }
-        }
-
-        @page {
-            size: A4;
-            margin: 0;
-        }
-    </style>
+  @page { size: A4; margin: 0; }
+</style>
 </head>
 <body>
-    <div class="page">
-        <div class="header">
-            <div class="logo-section">
-                <div class="logo">ET PPE</div>
-            </div>
-            <div class="company-info">
-                <div class="company-name">EnergiTech Power Insights</div>
-                <div class="company-tagline">LLP</div>
-                <div class="contact-info">
-                    <div class="contact-item">
-                        <span class="contact-label">Email:</span>
-                        <span>info@etpi.co.in</span>
-                    </div>
-                    <div class="contact-item">
-                        <span class="contact-label">Phone:</span>
-                        <span>+91 9848040763</span>
-                    </div>
-                    <div class="contact-item">
-                        <span class="contact-label">Address:</span>
-                        <span>UGF-38, States Plaza, Sahara States</span>
-                    </div>
-                    <div class="contact-item">
-                        <span class="contact-label">Mobile:</span>
-                        <span>+91 8885554519</span>
-                    </div>
-                    <div class="contact-item">
-                        <span>Mansoorabad, Near L.B Nagar</span>
-                    </div>
-                    <div class="contact-item">
-                        <span>Hyderabad – 500 068 (TS)</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <div class="page">
 
-        <div class="content">
-            <!-- Content area for letters -->
-        </div>
+    <div class="header">
+      <div class="logo-wrap">
+        <svg width="118" height="118" viewBox="0 0 118 118" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="59" cy="59" r="56" fill="#ffffff" stroke="#2f7d8c" stroke-width="7"/>
+          <circle cx="59" cy="59" r="45" fill="none" stroke="#2f7d8c" stroke-width="1.5"/>
 
-        <div class="footer">
-            <div class="footer-section">
-                <div class="footer-item">
-                    <div class="footer-title">License Information</div>
-                    <div>A-Grade Electrical License</div>
-                    <div>MCA Reg. No.: M28671478</div>
-                </div>
-                <div class="footer-item">
-                    <div class="footer-title">Registration</div>
-                    <div>LLP: ACH-8804</div>
-                    <div>IT PAN: AALFE2706L</div>
-                </div>
-                <div class="footer-item">
-                    <div class="footer-title">Tax Information</div>
-                    <div>GST: 36AALFE2706L1ZA</div>
-                </div>
-            </div>
-        </div>
+          <!-- circuit trace ticks, top -->
+          <g stroke="#2f7d8c" stroke-width="2.4">
+            <line x1="41" y1="6" x2="41" y2="14"/>
+            <line x1="50" y1="4" x2="50" y2="12"/>
+            <line x1="59" y1="3" x2="59" y2="11"/>
+            <line x1="68" y1="4" x2="68" y2="12"/>
+            <line x1="77" y1="6" x2="77" y2="14"/>
+          </g>
+          <!-- circuit trace ticks, bottom -->
+          <g stroke="#2f7d8c" stroke-width="2.4">
+            <line x1="41" y1="112" x2="41" y2="104"/>
+            <line x1="50" y1="114" x2="50" y2="106"/>
+            <line x1="59" y1="115" x2="59" y2="107"/>
+            <line x1="68" y1="114" x2="68" y2="106"/>
+            <line x1="77" y1="112" x2="77" y2="104"/>
+          </g>
+
+          <text x="30" y="68" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="800" fill="#111111">ET</text>
+          <text x="66" y="68" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="800" fill="#111111">PE</text>
+
+          <polygon points="59,32 50,60 57,60 52,86 70,54 61,54 66,32" fill="#3f9fd1"/>
+        </svg>
+      </div>
+
+      <div class="contact">
+        <div class="email">info@etpi.co.in</div>
+        <div class="phones">9848040763 / 8885554519</div>
+        <div class="addr-line">UGF-38, States Plaza, Sahara States,</div>
+        <div class="addr-line">Mansoorabad, Near L.B Nagar,</div>
+        <div class="addr-line">Hyderabad &ndash; 500 068&nbsp;&nbsp;(TS)</div>
+      </div>
     </div>
+
+    <div class="brand">
+      <div class="brand-name">EnergiTech Power Insights LLP</div>
+    </div>
+
+    <div class="rule">
+      <div class="tick"></div>
+      <div class="line"></div>
+    </div>
+
+    <div class="credentials">
+      A-Grade Electrical License, MCA Reg. No: M28671478, LLP: ACH-8804, IT PAN: AALFE2706L, GST:&nbsp; 36AALFE2706L1ZA
+    </div>
+
+  </div>
 </body>
 </html>
