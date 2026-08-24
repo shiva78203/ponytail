@@ -1,0 +1,85 @@
+╔════════════════════════════════════════════════════════════════════╗
+║         🤖 TELLONYM TELEGRAM BOT - QUICK START GUIDE 🤖           ║
+╚════════════════════════════════════════════════════════════════════╝
+
+┌─ STEP 1: DOWNLOAD TELEGRAM ─────────────────────────────────────┐
+│ 1. Go to App Store / Google Play                                │
+│ 2. Search "Telegram"                                            │
+│ 3. Install & create account                                     │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─ STEP 2: CREATE BOT (Get Token) ────────────────────────────────┐
+│ 1. In Telegram, search: @BotFather                              │
+│ 2. Send: /start                                                 │
+│ 3. Send: /newbot                                                │
+│ 4. Name it: TellonymBot                                         │
+│ 5. Username: tellonym_bot_123 (ends with "bot")               │
+│ 6. Copy the TOKEN given (looks like: 123456:ABCD...)          │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─ STEP 3: SET UP COMPUTER ──────────────────────────────────────┐
+│ Open Terminal/Command Prompt and paste:                         │
+│                                                                 │
+│ On Mac/Linux:                                                   │
+│   export TELEGRAM_BOT_TOKEN="YOUR_TOKEN_HERE"                  │
+│                                                                 │
+│ On Windows:                                                     │
+│   set TELEGRAM_BOT_TOKEN=YOUR_TOKEN_HERE                       │
+│                                                                 │
+│ Replace "YOUR_TOKEN_HERE" with actual token from step 2        │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─ STEP 4: INSTALL SOFTWARE ─────────────────────────────────────┐
+│ In Terminal/Command Prompt, paste:                              │
+│                                                                 │
+│ pip install python-telegram-bot requests                        │
+│                                                                 │
+│ Wait for it to finish (say "Successfully installed")           │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─ STEP 5: START THE BOT ────────────────────────────────────────┐
+│ In Terminal/Command Prompt:                                     │
+│                                                                 │
+│ cd Desktop/TellonymBot                                          │
+│ python telegram_bot_advanced.py                                 │
+│                                                                 │
+│ Wait for message: "🤖 Bot is running..."                        │
+│ ⚠️  DON'T CLOSE THIS WINDOW!                                    │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─ STEP 6: USE THE BOT ──────────────────────────────────────────┐
+│ In Telegram:                                                    │
+│ 1. Search: @YOUR_BOT_NAME                                       │
+│ 2. Click on it                                                  │
+│ 3. Send: /start                                                 │
+│ 4. Click: 🔐 Login                                              │
+│ 5. Enter Tellonym username                                      │
+│ 6. Enter Tellonym password                                      │
+│                                                                 │
+│ ✅ Now you can:                                                 │
+│   /chats        - See all messages                              │
+│   /reply 1 Hi   - Reply to message #1                           │
+│   /stats        - See statistics                                │
+│   /logout       - Sign out                                      │
+└─────────────────────────────────────────────────────────────────┘
+
+╔════════════════════════════════════════════════════════════════════╗
+║                    🎉 YOU'RE DONE! ENJOY! 🎉                     ║
+╚════════════════════════════════════════════════════════════════════╝
+
+📝 QUICK COMMANDS:
+   /start              - Main menu
+   /chats              - View messages
+   /reply 1 Message    - Reply to chat #1
+   /stats              - Show statistics
+   /logout             - Sign out
+
+💾 EVERYTHING IS SAVED - Your messages never disappear!
+
+❓ HELP:
+   - Bot offline? Restart terminal
+   - Login fails? Check username/password spelling
+   - Token error? Copy exact token from BotFather
+
+💡 NEXT TIME:
+   Just run: python telegram_bot_advanced.py
