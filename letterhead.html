@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EnergiTech Power Insights LLP - Letterhead</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .page {
+            width: 210mm;
+            height: 297mm;
+            background-color: white;
+            margin: 0 auto;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 40px 50px;
+            border-bottom: 3px solid #003d82;
+            display: flex;
+            align-items: flex-start;
+            gap: 30px;
+        }
+
+        .logo-section {
+            flex-shrink: 0;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #003d82 0%, #0066cc 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0, 61, 130, 0.3);
+        }
+
+        .company-info {
+            flex-grow: 1;
+        }
+
+        .company-name {
+            font-size: 28px;
+            font-weight: 700;
+            color: #003d82;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
+
+        .company-tagline {
+            font-size: 12px;
+            color: #0066cc;
+            font-weight: 500;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .contact-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px 25px;
+            font-size: 11px;
+            color: #333;
+        }
+
+        .contact-item {
+            display: flex;
+            gap: 8px;
+        }
+
+        .contact-label {
+            font-weight: 600;
+            color: #003d82;
+            min-width: 50px;
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 50px;
+        }
+
+        .footer {
+            padding: 30px 50px;
+            border-top: 1px solid #e0e0e0;
+            background-color: #f9f9f9;
+            font-size: 9px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .footer-section {
+            display: flex;
+            justify-content: space-between;
+            gap: 40px;
+        }
+
+        .footer-item {
+            flex: 1;
+        }
+
+        .footer-title {
+            font-weight: 600;
+            color: #003d82;
+            margin-bottom: 5px;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                background-color: white;
+            }
+
+            .page {
+                box-shadow: none;
+                margin: 0;
+                width: 100%;
+                height: 100%;
+            }
+        }
+
+        @page {
+            size: A4;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <div class="logo-section">
+                <div class="logo">ET PPE</div>
+            </div>
+            <div class="company-info">
+                <div class="company-name">EnergiTech Power Insights</div>
+                <div class="company-tagline">LLP</div>
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <span class="contact-label">Email:</span>
+                        <span>info@etpi.co.in</span>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-label">Phone:</span>
+                        <span>+91 9848040763</span>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-label">Address:</span>
+                        <span>UGF-38, States Plaza, Sahara States</span>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-label">Mobile:</span>
+                        <span>+91 8885554519</span>
+                    </div>
+                    <div class="contact-item">
+                        <span>Mansoorabad, Near L.B Nagar</span>
+                    </div>
+                    <div class="contact-item">
+                        <span>Hyderabad – 500 068 (TS)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Content area for letters -->
+        </div>
+
+        <div class="footer">
+            <div class="footer-section">
+                <div class="footer-item">
+                    <div class="footer-title">License Information</div>
+                    <div>A-Grade Electrical License</div>
+                    <div>MCA Reg. No.: M28671478</div>
+                </div>
+                <div class="footer-item">
+                    <div class="footer-title">Registration</div>
+                    <div>LLP: ACH-8804</div>
+                    <div>IT PAN: AALFE2706L</div>
+                </div>
+                <div class="footer-item">
+                    <div class="footer-title">Tax Information</div>
+                    <div>GST: 36AALFE2706L1ZA</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
