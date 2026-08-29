@@ -32,6 +32,31 @@ to load in a given agent.
 | Zed | `AGENTS.md` | Auto-includes `AGENTS.md` from the worktree root as one of its default rule files for the Agent Panel. Instruction-tier. |
 | Generic agents | `AGENTS.md` or `skills/*/SKILL.md` | Copy the compact rule file or load the skill files directly. |
 
+## Installing Into a Project That Bundles Its Own Skills
+
+Some Claude Code projects don't rely on a marketplace plugin install — they
+already vendor a `.claude/skills/` directory of their own project-specific
+skills. [OpenMontage](https://github.com/calesthio/OpenMontage) is one
+example: it ships ~50 skills under `.claude/skills/` plus a project
+`AGENTS.md`/`CLAUDE.md` pair.
+
+To add ponytail to a project like that:
+
+1. Copy the six skill folders from this repo's `skills/` (`ponytail`,
+   `ponytail-review`, `ponytail-audit`, `ponytail-debt`, `ponytail-gain`,
+   `ponytail-help`) into the target project's `.claude/skills/`.
+2. Copy `commands/*.toml` into the target project's `.claude/commands/` so
+   `/ponytail`, `/ponytail-review`, etc. are available.
+3. Append (don't replace) the ruleset from this repo's `AGENTS.md` into the
+   project's own `AGENTS.md`/`CLAUDE.md`. If that file already routes to
+   another mandatory doc (as OpenMontage's does, to `AGENT_GUIDE.md`), add
+   the ponytail block after that routing note rather than before it, so the
+   project's own onboarding still runs first.
+
+This is the same skills-tier install as the Claude Code row above, just
+placed by hand instead of through `.claude-plugin/plugin.json`, because the
+target project already owns its `.claude/skills/` directory.
+
 ## Adapter Rule
 
 Keep adapters thin. When a host supports skills or hooks, point it at the
