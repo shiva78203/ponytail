@@ -7,6 +7,7 @@ provides_hooks:
   - pre_gateway_dispatch
 provides_commands:
   - ponytail
+  - ponytail-think
   - ponytail-review
   - ponytail-audit
   - ponytail-debt
@@ -14,6 +15,7 @@ provides_commands:
   - ponytail-help
 provides_skills:
   - ponytail
+  - ponytail-think
   - ponytail-review
   - ponytail-audit
   - ponytail-debt

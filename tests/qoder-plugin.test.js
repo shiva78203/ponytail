@@ -10,6 +10,7 @@ const path = require('path');
 const root = path.join(__dirname, '..');
 const SKILL_DIRS = [
   'ponytail',
+  'ponytail-think',
   'ponytail-review',
   'ponytail-audit',
   'ponytail-debt',

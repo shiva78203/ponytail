@@ -26,6 +26,7 @@ Level sticks until changed or session end.
 | Skill | Trigger | What it does |
 |-------|---------|--------------|
 | **ponytail** | `/ponytail` | Lazy mode itself. Simplest solution that works. |
+| **ponytail-think** | `/ponytail-think` | Reasoning-first mode: options, tradeoffs, then one justified solution. |
 | **ponytail-review** | `/ponytail-review` | Over-engineering review: `L42: yagni: factory, one product. Inline.` |
 | **ponytail-audit** | `/ponytail-audit` | Whole-repo over-engineering audit: ranked list of what to delete. |
 | **ponytail-debt** | `/ponytail-debt` | Harvest `ponytail:` shortcut comments into a tracked ledger. |

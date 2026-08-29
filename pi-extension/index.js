@@ -146,6 +146,11 @@ export default function ponytailExtension(pi) {
     },
   });
 
+  pi.registerCommand("ponytail-think", {
+    description: "Run /skill:ponytail-think",
+    handler: (_args, ctx) => sendAlias("/skill:ponytail-think", "", ctx),
+  });
+
   pi.registerCommand("ponytail-review", {
     description: "Run /skill:ponytail-review",
     handler: (_args, ctx) => sendAlias("/skill:ponytail-review", "", ctx),

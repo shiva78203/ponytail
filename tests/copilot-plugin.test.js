@@ -10,6 +10,7 @@ const path = require('path');
 const root = path.join(__dirname, '..');
 const REQUIRED_COMMAND_FILES = [
   'ponytail.toml',
+  'ponytail-think.toml',
   'ponytail-review.toml',
   'ponytail-audit.toml',
   'ponytail-debt.toml',

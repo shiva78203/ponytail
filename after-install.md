@@ -13,10 +13,11 @@ In shared gateways, restrict `/ponytail` to trusted users with Hermes slash-comm
 Commands:
 
 - `/ponytail [lite|full|ultra|off]`
+- `/ponytail-think [target]`
 - `/ponytail-review [target]`
 - `/ponytail-audit [target]`
 - `/ponytail-debt`
 - `/ponytail-gain`
 - `/ponytail-help`
 
-Bundled skills are available as `ponytail:ponytail`, `ponytail:ponytail-review`, `ponytail:ponytail-audit`, `ponytail:ponytail-debt`, `ponytail:ponytail-gain`, and `ponytail:ponytail-help`.
+Bundled skills are available as `ponytail:ponytail`, `ponytail:ponytail-think`, `ponytail:ponytail-review`, `ponytail:ponytail-audit`, `ponytail:ponytail-debt`, `ponytail:ponytail-gain`, and `ponytail:ponytail-help`.

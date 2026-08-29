@@ -12,6 +12,7 @@ DEFAULT_MODE = "full"
 RUNTIME_MODES = {"off", "lite", "full", "ultra"}
 CONFIG_MODES = RUNTIME_MODES | {"review"}
 SKILL_COMMANDS = {
+    "ponytail-think": "Think through the real options out loud, then give one clear, justified solution.",
     "ponytail-review": "Review the current diff or provided target for over-engineering.",
     "ponytail-audit": "Audit the repo for over-engineering and deletion opportunities.",
     "ponytail-debt": "List every deliberate `ponytail:` shortcut and its upgrade path.",
