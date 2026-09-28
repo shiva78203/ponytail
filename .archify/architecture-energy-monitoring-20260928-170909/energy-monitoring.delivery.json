@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "70f3b0d9-29c6-4e4a-ae91-1a12db774634",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/home/user/ponytail/.archify/architecture-energy-monitoring-20260928-170909/candidate.json",
+  "output": "/home/user/ponytail/.archify/architecture-energy-monitoring-20260928-170909/energy-monitoring.html",
+  "specification": {
+    "sha256": "be1c0f6f01e495e3bf19c28324600919c248ded6e64b60c7aa962ed533886b93",
+    "bytes": 3720
+  },
+  "artifact": {
+    "sha256": "aa13f2ce9fb12dc43d0b6d36784f64e1a929281b6e769437e7c976ec8f64559d",
+    "bytes": 765698
+  }
+}
