@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Energy Meter Monitoring System",
+    "output": ".archify/architecture-energy-monitoring-20260928-170909/energy-monitoring.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    { "id": "meters", "type": "external", "label": "Energy Meters", "sublabel": "Schneider · Elmeasure", "pos": [40, 300], "size": [140, 64], "tag": "slave IDs 1..32" },
+    { "id": "gateway", "type": "cloud", "label": "Modbus Gateway", "sublabel": "RS485→Ethernet / Pi", "pos": [340, 300], "size": [140, 64] },
+    { "id": "telegraf", "type": "backend", "label": "Telegraf", "sublabel": "modbus input, 10 s poll", "pos": [580, 300], "size": [140, 64] },
+    { "id": "influx", "type": "database", "label": "InfluxDB", "sublabel": "time-series store", "pos": [840, 300], "size": [140, 64] },
+    { "id": "grafana", "type": "frontend", "label": "Grafana", "sublabel": "live dashboards", "pos": [1090, 300], "size": [140, 64] },
+    { "id": "alerts", "type": "security", "label": "Alert Rules", "sublabel": "PF · MD · CT · THD", "pos": [1090, 450], "size": [140, 64] },
+    { "id": "notify", "type": "external", "label": "Notifications", "sublabel": "email · Telegram", "pos": [1090, 600], "size": [140, 64] },
+    { "id": "remote", "type": "external", "label": "Remote Site", "sublabel": "4G gateway", "pos": [340, 130], "size": [140, 64], "tag": "phase 2" },
+    { "id": "mqtt", "type": "messagebus", "label": "MQTT Broker", "sublabel": "Mosquitto", "pos": [580, 130], "size": [140, 64], "tag": "phase 2" },
+    { "id": "webapp", "type": "frontend", "label": "Custom Web App", "sublabel": "multi-tenant SaaS", "pos": [840, 130], "size": [140, 64], "tag": "phase 2" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Plant floor (RS-485 bus)", "wraps": ["meters", "gateway"] },
+    { "kind": "region", "label": "Monitoring server (Docker)", "wraps": ["telegraf", "influx", "grafana", "alerts"] }
+  ],
+  "connections": [
+    { "id": "rtu", "from": "meters", "to": "gateway", "label": "Modbus RTU / RS-485", "variant": "emphasis" },
+    { "id": "tcp", "from": "gateway", "to": "telegraf", "label": "Modbus TCP", "variant": "emphasis" },
+    { "id": "write", "from": "telegraf", "to": "influx", "label": "line protocol", "variant": "emphasis" },
+    { "id": "query", "from": "influx", "to": "grafana", "label": "Flux / SQL" },
+    { "id": "eval", "from": "grafana", "to": "alerts", "label": "evaluate 1 min", "fromSide": "bottom", "toSide": "top" },
+    { "id": "send", "from": "alerts", "to": "notify", "label": "on breach", "variant": "security", "fromSide": "bottom", "toSide": "top" },
+    { "id": "mqtt-pub", "from": "remote", "to": "mqtt", "label": "MQTT over 4G", "variant": "dashed" },
+    { "id": "mqtt-sub", "from": "mqtt", "to": "telegraf", "label": "subscribe", "variant": "dashed", "fromSide": "bottom", "toSide": "top" },
+    { "id": "app-read", "from": "influx", "to": "webapp", "label": "API reads", "variant": "dashed", "fromSide": "top", "toSide": "bottom" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Phase 1: one site", "items": ["Read registers with QModMaster first", "Telegraf polls every meter over Modbus", "Grafana dashboards: kWh, kVA, PF, THD"] },
+    { "dot": "rose", "title": "Alert rules", "items": ["Avg PF below tariff threshold", "kVA demand near contract demand", "Negative per-phase kW: CT polarity", "Odd per-phase PF: CT interchange", "Voltage angles not 0/120/240", "THD-V above 5%, current unbalance above 10%"] },
+    { "dot": "violet", "title": "Phase 2: product", "items": ["Remote sites push via MQTT over 4G", "Custom web app with customer logins", "Monthly PDF savings reports"] }
+  ]
+}
