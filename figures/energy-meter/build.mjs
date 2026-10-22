@@ -472,6 +472,9 @@ stage.addEventListener("keydown", (event) => {
 });
 paint();
 
+// For the printed sheet: a fixed load and the worked-example reading, held still.
+window.__meterStill = (a) => { touring = false; target = amps = a; wh = START_WH; held = null; paint(); held = { shown: onDisplay, step: -1 }; };
+
 // Read it: the skill's decode, one step at a time, on a held reading.
 const decode = ${M.decode.toString()};
 const steps = [...document.querySelectorAll("[data-step]")];
