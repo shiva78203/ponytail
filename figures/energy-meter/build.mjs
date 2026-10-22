@@ -81,6 +81,7 @@ const depth = ([x, y, z = 0]) => k.depthOf([x, y, z], P);
 const byDepth = (points) => [...points].sort((a, b) => depth(a) - depth(b));
 const planeOf = (y) => k.sideMatrix([0, y], 0, P, "left");
 const flat = (x0, z0, x1, z1, r, steps = 6) => k.pathOf(k.roundedPlan({ x: x0, y: z0, w: x1 - x0, d: z1 - z0, r }, steps).map(([u, z]) => [u, -z]), true);
+const part = (name, svg) => `<g data-part="${name}">${svg}</g>`;
 const box = (plan, z, h, tone, extra = {}) => S(k.slabOf(plan, z, h, P, 4, extra.bevel ?? 0.4), { tone, ...extra });
 
 function plate() {
@@ -113,20 +114,19 @@ function busbars() {
   BARS.forEach((x, i) => {
     out.push(S(k.cylinder(x, BAR_Y, 6, BUS_H, 3, P, 24), { tone: "mid" }));
     if (i === 3) {
-      out.push(bar(x, BUS_H + 3, N_TOP));
+      out.push(part("bars", bar(x, BUS_H + 3, N_TOP)));
     } else {
-      out.push(bar(x, BUS_H + 3, CT_Z[0]));
-      out.push(S(k.cylinder(x, BAR_Y, CT_R, CT_Z[0], CT_Z[1] - CT_Z[0], P, 48), { tone: "mid", crease: "lo" }));
-      out.push(L(k.knurl(x, BAR_Y, CT_R, CT_Z[0], CT_Z[1], 40, P), { tone: "faint" }));
-      out.push(`<path class="em-hole" d="${k.onTop(k.circleRing(x, BAR_Y, 5.4, 28), CT_Z[1], P, true)}"/>`);
-      out.push(L(k.ring(x, BAR_Y, 5.4, CT_Z[1], P, 28), { tone: "lo" }));
-      out.push(bar(x, CT_Z[1] - 1, BAR_TOP));
-      for (const dx of [-4.5, 4.5]) {
-        out.push(S(k.cylinder(x + dx, BAR_Y + 7, 1.7, CT_Z[1], 1.2, P, 14), { tone: "hi" }));
-      }
+      out.push(part("bars", bar(x, BUS_H + 3, CT_Z[0])));
+      const ct = [];
+      ct.push(S(k.cylinder(x, BAR_Y, CT_R, CT_Z[0], CT_Z[1] - CT_Z[0], P, 48), { tone: "mid", crease: "lo" }));
+      ct.push(L(k.knurl(x, BAR_Y, CT_R, CT_Z[0], CT_Z[1], 40, P), { tone: "faint" }));
+      ct.push(`<path class="em-hole" d="${k.onTop(k.circleRing(x, BAR_Y, 5.4, 28), CT_Z[1], P, true)}"/>`);
+      ct.push(L(k.ring(x, BAR_Y, 5.4, CT_Z[1], P, 28), { tone: "lo" }));
+      out.push(part("ct", ct.join("")));
+      out.push(part("bars", bar(x, CT_Z[1] - 1, BAR_TOP)));
+      out.push(part("ct", [-4.5, 4.5].map((dx) => S(k.cylinder(x + dx, BAR_Y + 7, 1.7, CT_Z[1], 1.2, P, 14), { tone: "hi" })).join("")));
     }
-    out.push(box({ x: x - 2.6, y: BAR_Y + 2, w: 5.2, d: 4, r: 0.8 }, TAP_Z[i] - 2.6, 5.2, "hi", { crease: "lo" }));
-    out.push(D([at([x, BAR_Y + 4, TAP_Z[i] + 2.6])], { size: 0.45, tone: "lo" }));
+    out.push(part("taps", box({ x: x - 2.6, y: BAR_Y + 2, w: 5.2, d: 4, r: 0.8 }, TAP_Z[i] - 2.6, 5.2, "hi", { crease: "lo" }) + D([at([x, BAR_Y + 4, TAP_Z[i] + 2.6])], { size: 0.45, tone: "lo" })));
   });
   return out.join("");
 }
@@ -156,7 +156,7 @@ function terminals() {
     out.push(S(k.cylinder(x, TERM_Y, 2.5, TB_TOP, 1.2, P, 20), { tone: "hi" }));
     out.push(L(k.lineOnTop([x - 2.5, TERM_Y], [x + 2.5, TERM_Y], TB_TOP + 1.2, P), { tone: "lo" }));
   });
-  return out.join("");
+  return part("terminals", out.join(""));
 }
 
 function board() {
@@ -179,7 +179,7 @@ function board() {
     ...[[-12, 37], [-4, 38], [4, 38], [12, 37]].map(([x, y], i) => trace([[x, HEADER.y], [x, y], [MCU.x + 1 + i * 1.5, y], [MCU.x + 1 + i * 1.5, MCU.y + MCU.d]])),
   ].filter(Boolean);
   out.push(L(traces.join(""), { tone: "faint" }));
-  return out.join("");
+  return part("board", out.join(""));
 }
 
 function chip(plan, tone, pins) {
@@ -202,9 +202,9 @@ function chip(plan, tone, pins) {
 
 function parts() {
   const items = [];
-  const add = (x, y, svg) => items.push({ key: depth([x, y, BT]), svg });
+  const add = (name, x, y, svg) => items.push({ key: depth([x, y, BT]), svg: part(name, svg) });
   TOROIDS.forEach((t) => {
-    add(t.x, t.y, [
+    add("toroids", t.x, t.y, [
       S(k.cylinder(t.x, t.y, t.r, BT, t.h, P, 40, 0.5), { tone: "hi", crease: "lo" }),
       L(k.knurl(t.x, t.y, t.r, BT + 0.8, BT + t.h - 0.8, 30, P), { tone: "lo" }),
       `<path class="em-hole" d="${k.onTop(k.circleRing(t.x, t.y, 2.6, 24), BT + t.h, P, true)}"/>`,
@@ -214,29 +214,29 @@ function parts() {
   RES_X.forEach((x) => {
     for (const y of [-20, -11]) {
       const plan = { x: x - 1.3, y, w: 2.6, d: 7, r: 1.3 };
-      add(x, y + 3.5, [
+      add("divider", x, y + 3.5, [
         box(plan, BT, 2.6, "mid", { bevel: 0 }),
         L([1.6, 2.8, 5.4].map((dy) => k.lineOnTop([plan.x, y + dy], [plan.x + plan.w, y + dy], BT + 2.6, P)).join(""), { tone: "lo" }),
       ].join(""));
     }
   });
-  add(IC.x + 6, IC.y + 6, chip(IC, "hi", 9));
-  add(MCU.x + 5, MCU.y + 5, chip(MCU, "mid", 7));
-  add(XTAL.x + 3, XTAL.y, box(XTAL, BT, 3, "mid", { bevel: 0.3 }));
-  add(EEPROM.x + 2, EEPROM.y + 2, chip(EEPROM, "mid", 3));
-  add(XFMR.x + 6, XFMR.y + 5, [
+  add("ic", IC.x + 6, IC.y + 6, chip(IC, "hi", 9));
+  add("mcu", MCU.x + 5, MCU.y + 5, chip(MCU, "mid", 7));
+  add("mcu", XTAL.x + 3, XTAL.y, box(XTAL, BT, 3, "mid", { bevel: 0.3 }));
+  add("mcu", EEPROM.x + 2, EEPROM.y + 2, chip(EEPROM, "mid", 3));
+  add("psu", XFMR.x + 6, XFMR.y + 5, [
     box(XFMR, BT, 3, "lo"),
     box(k.insetPlan(XFMR, 1.5), BT + 3, 7, "mid"),
     L([2, 3.5, 5].map((z) => k.segment([XFMR.x + XFMR.w - 1.5, XFMR.y + 1.5, BT + 3 + z], [XFMR.x + XFMR.w - 1.5, XFMR.y + XFMR.d - 1.5, BT + 3 + z], P)).join(""), { tone: "faint" }),
   ].join(""));
   CAPS.forEach(([x, y]) => {
-    add(x, y, [
+    add("psu", x, y, [
       S(k.cylinder(x, y, 3, BT, 9, P, 28, 0.5), { tone: "mid" }),
       L(k.sideArc(x, y, 3, BT + 7.4, P, 16), { tone: "lo" }),
       L(k.lineOnTop([x - 3, y], [x + 3, y], BT + 9, P) + k.lineOnTop([x, y - 3], [x, y + 3], BT + 9, P), { tone: "lo" }),
     ].join(""));
   });
-  add(0, HEADER.y + 2, [
+  add("display", 0, HEADER.y + 2, [
     box(HEADER, BT, 4, "mid"),
     D(Array.from({ length: 12 }, (_, i) => at([HEADER.x + 1.5 + i * 3, HEADER.y + 3.2, BT + 4])), { size: 0.35 }),
   ].join(""));
@@ -252,14 +252,14 @@ function leads() {
     }
   });
   RES_X.forEach((x, i) => out.push(k.wireSvg(at([termX(6 + i), TB_FACE, 29]), at([x, -20, BT + 2.6]), { tone: "mid", size: 0.8 })));
-  return `<g class="em-lead">${out.join("")}</g>`;
+  return `<g class="em-lead" data-part="leads">${out.join("")}</g>`;
 }
 
 function displayBoard() {
   const out = [];
   out.push(box(DISP, BT + 4, CASE_Z[1] - 4 - BT - 4, "lo", { bevel: 0 }));
   ROWS_Z.forEach((z) => out.push(box({ x: -28, y: DISP.y + DISP.d, w: 42, d: FRONT - BEZEL.d - DISP.y - DISP.d, r: 0.4 }, z - 7, 14, "mid", { bevel: 0 })));
-  return out.join("");
+  return part("display", out.join(""));
 }
 
 function nearWall() {
@@ -320,17 +320,17 @@ function displayFace(rows, lamp, barCount) {
   const labels = ["L1", "L2", "L3"];
   ROWS_Z.forEach((cz, r) => {
     const oz = cz - DIG.h / 2;
-    out.push(`<text class="em-legend" x="${WIN.x0 + 3}" y="${(-(cz - 1.4)).toFixed(1)}" font-size="3.6">${labels[r]}</text>`);
+    out.push(`<text class="em-legend" data-row="${r}" x="${WIN.x0 + 3}" y="${(-(cz - 1.4)).toFixed(1)}" font-size="3.6">${labels[r]}</text>`);
     for (let i = 0; i < 4; i++) {
       const ox = DIG.x0 + i * DIG.pitch;
       const on = FONT[rows[r].chars[i]] || "";
       const segs = Object.keys(SEGS).map((s) => `<path data-s="${s}"${on.includes(s) ? " data-on" : ""} d="${segPath(s, ox, oz)}"/>`);
       const dp = `<circle data-s="p"${rows[r].point === i ? " data-on" : ""} cx="${(ox + DIG.w + 1.3).toFixed(2)}" cy="${(-(oz + 0.5)).toFixed(2)}" r="0.85"/>`;
-      out.push(`<g class="em-digit" data-d="${r}-${i}">${segs.join("")}${dp}</g>`);
+      out.push(`<g class="em-digit" data-row="${r}" data-d="${r}-${i}">${segs.join("")}${dp}</g>`);
     }
     for (const [name, dz] of [["K", 2.6], ["M", -2.6]]) {
       const lit = r > 0 && lamp === name;
-      out.push(`<g class="em-lamp" data-lamp="${r}-${name}"${lit ? " data-on" : ""}><path d="${flat(16.5, cz + dz - 2, 21.5, cz + dz + 2, 0.6, 2)}"/><text x="19" y="${(-(cz + dz - 1.1)).toFixed(1)}" font-size="3" text-anchor="middle">${name}</text></g>`);
+      out.push(`<g class="em-lamp" data-row="${r}" data-lamp="${r}-${name}"${lit ? " data-on" : ""}><path d="${flat(16.5, cz + dz - 2, 21.5, cz + dz + 2, 0.6, 2)}"/><text x="19" y="${(-(cz + dz - 1.1)).toFixed(1)}" font-size="3" text-anchor="middle">${name}</text></g>`);
     }
   });
   for (let i = 0; i < BARS_N; i++) {
@@ -357,11 +357,8 @@ function front() {
   const out = [];
   out.push(box(BEZEL, BEZ_Z[0], BEZ_Z[1] - BEZ_Z[0], "mid", { bevel: 1.2 }));
   out.push(`<g transform="${planeOf(FRONT)}"><path class="iso-line" data-tone="faint" d="${flat(BEZEL.x + 3.5, BEZ_Z[0] + 3.5, BEZEL.x + BEZEL.w - 3.5, BEZ_Z[1] - 3.5, 2)}"/></g>`);
-  out.push(recess(WIN, FRONT, displayFace(rowsOf(M.START_WH), startShown.lamp, Math.round((START_AMPS / M.CT[0]) * BARS_N)), "em-glass"));
-  for (const cx of [-27, -9, 9, 27]) {
-    out.push(box({ x: cx - 6, y: FRONT, w: 12, d: 1.8, r: 0.9 }, 16, 10, "mid", { bevel: 0.3 }));
-  }
-  out.push(D([-27, -9, 9, 27].map((cx) => at([cx, FRONT + 1.8, 28.6])), { size: 0.35, tone: "lo" }));
+  out.push(part("window", recess(WIN, FRONT, displayFace(rowsOf(M.START_WH), startShown.lamp, Math.round((START_AMPS / M.CT[0]) * BARS_N)), "em-glass")));
+  out.push(part("keys", [-27, -9, 9, 27].map((cx) => box({ x: cx - 6, y: FRONT, w: 12, d: 1.8, r: 0.9 }, 16, 10, "mid", { bevel: 0.3 })).join("") + D([-27, -9, 9, 27].map((cx) => at([cx, FRONT + 1.8, 28.6])), { size: 0.35, tone: "lo" })));
   return out.join("");
 }
 
@@ -391,7 +388,7 @@ function wires() {
     const to = [termX(6 + i), TERM_Y, TB_TOP + 1.2];
     return k.wireSvg(at(from), at(to), { via: route(from, to, 8), tone: "mid", size: 0.9 });
   });
-  out.push(`<g class="em-taps">${taps.join("")}</g>`, `<g class="em-ct">${ct.join("")}</g>`);
+  out.push(`<g class="em-taps" data-part="taps">${taps.join("")}</g>`, `<g class="em-ct" data-part="ct">${ct.join("")}</g>`);
   return out.join("");
 }
 
@@ -422,8 +419,10 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const TOUR = [300, 400, 120, 40];
 let wh = START_WH, amps = ${START_AMPS}, target = amps, warp = 1;
 let frame = 0, last = 0, clock = 0, refresh = 0, touring = !still.matches, visible = false, idle = 0;
+let held = null, onDisplay = displayOf(wh);
 function paint() {
-  const shown = displayOf(wh);
+  if (held) return;
+  const shown = onDisplay = displayOf(wh);
   const rows = ["  Wh", shown.digits.slice(0, 4), shown.digits.slice(4)];
   digits.forEach((g) => {
     const [r, i] = g.dataset.d.split("-").map(Number);
@@ -472,6 +471,92 @@ stage.addEventListener("keydown", (event) => {
   event.preventDefault();
 });
 paint();
+
+// Read it: the skill's decode, one step at a time, on a held reading.
+const decode = ${M.decode.toString()};
+const steps = [...document.querySelectorAll("[data-step]")];
+const stepOut = document.querySelector("[data-step-out]");
+const rowEls = [...svg.querySelectorAll("[data-row]")];
+const fmt = (n, places, locale = "en-US") => n.toLocaleString(locale, { minimumFractionDigits: places, maximumFractionDigits: places });
+const FOCUS = [
+  (el) => el.dataset.row === "0",
+  (el) => el.dataset.row === "1" && !el.dataset.lamp,
+  (el) => el.dataset.row !== "0" && !el.dataset.lamp,
+  (el) => el.dataset.row !== "0" && !!el.dataset.lamp,
+  (el) => el.dataset.row !== "0",
+];
+const IDLE = stepOut.textContent;
+function showStep(n) {
+  if (n === null || held?.step === n) {
+    held = null;
+    svg.classList.remove("em-focus");
+    rowEls.forEach((el) => el.classList.remove("em-in"));
+    steps.forEach((b) => b.setAttribute("aria-pressed", "false"));
+    stepOut.textContent = IDLE;
+    paint();
+    return;
+  }
+  if (!held) held = { shown: onDisplay };
+  held.step = n;
+  const s = held.shown;
+  const r2 = s.point < 4 ? s.digits.slice(0, s.point + 1) + "." + s.digits.slice(s.point + 1, 4) : s.digits.slice(0, 4);
+  const r3 = s.digits.slice(4);
+  const kwh = decode(r2, r3, s.lamp);
+  const unit = s.lamp === "M" ? "MWh" : "kWh";
+  const lines = [
+    "Top row reads Wh: active energy, the number you are billed on. If it said VAh or VARh, this would not be units.",
+    "Row 2, exactly as shown with its point: " + r2,
+    "Write row 3 straight after it: " + r2 + " + " + r3 + " → " + s.value,
+    s.lamp + " lamp lit → " + s.value + " " + unit + (s.lamp === "M" ? "  (K would mean kWh)" : "  (M would mean MWh)"),
+    (s.lamp === "M" ? s.value + " MWh × 1000 = " : "") + fmt(kwh, 2) + " kWh = " + fmt(kwh, 2, "en-IN") + " units (1 unit = 1 kWh)",
+  ];
+  svg.classList.add("em-focus");
+  rowEls.forEach((el) => el.classList.toggle("em-in", FOCUS[n](el)));
+  steps.forEach((b, i) => b.setAttribute("aria-pressed", String(i === n)));
+  stepOut.textContent = lines[n];
+}
+steps.forEach((b, i) => b.addEventListener("click", () => showStep(i)));
+document.addEventListener("keydown", (event) => { if (event.key === "Escape" && held) showStep(null); });
+
+// Parts: hover or focus a name and that part lights in the drawing.
+for (const item of document.querySelectorAll("[data-pick]")) {
+  const els = [...svg.querySelectorAll('[data-part="' + item.dataset.pick + '"]')];
+  const on = (yes) => { svg.classList.toggle("em-hl", yes); els.forEach((el) => el.classList.toggle("em-pick", yes)); };
+  item.addEventListener("pointerenter", () => on(true));
+  item.addEventListener("pointerleave", () => on(false));
+  item.addEventListener("focus", () => on(true));
+  item.addEventListener("blur", () => on(false));
+}
+
+// Decode your own reading.
+const form = document.querySelector("[data-decoder]");
+const decoded = document.querySelector("[data-decoded]");
+const rec = document.querySelector("[data-record]");
+function decodeForm() {
+  const f = Object.fromEntries(new FormData(form));
+  const notes = [];
+  if (f.top !== "Wh") notes.push(f.top + " is not active energy: units on the bill come from the Wh page. Press the keys until the top row says Wh.");
+  let kwh = decode(f.row2, f.row3, f.lamp);
+  if (kwh === null) { decoded.textContent = "Type row 2 as shown (up to 4 digits, with its point) and row 3 (up to 4 digits)."; return; }
+  const ratio = Number(f.ratio) || 1;
+  if (ratio > 1) { kwh *= ratio; notes.push("Meter set to 5/5 on a " + ratio * 5 + "/5 CT: reading × " + ratio + ". Check the CT nameplate."); }
+  const prev = Number(f.prev);
+  const tariff = Number(f.tariff);
+  let use = "";
+  if (f.prev.trim() !== "" && prev >= 0) {
+    const used = kwh - prev;
+    use = " · used since last reading: " + fmt(used, 2) + " kWh" + (tariff > 0 ? " · cost ≈ " + fmt(used * tariff, 2) + " at " + tariff + " per unit" : "");
+    if (used < 0) notes.push("Present reading is below the previous one: check the digits, the point and the K/M lamp.");
+  }
+  decoded.textContent = fmt(kwh / 1000, 5) + " MWh = " + fmt(kwh, 2) + " kWh = " + fmt(kwh, 2, "en-IN") + " units" + use + (notes.length ? "  ⚠ " + notes.join(" ") : "");
+  rec.querySelector('[data-rec="display"]').textContent = f.row2 + " / " + f.row3;
+  rec.querySelector('[data-rec="lamp"]').textContent = f.lamp;
+  rec.querySelector('[data-rec="mwh"]').textContent = fmt(kwh / 1000, 5) + " MWh";
+  rec.querySelector('[data-rec="kwh"]').textContent = fmt(kwh, 2) + " kWh";
+}
+form.addEventListener("input", decodeForm);
+form.addEventListener("submit", (event) => { event.preventDefault(); decodeForm(); });
+decodeForm();
 `;
 
 const css = `<style>
@@ -490,6 +575,32 @@ const css = `<style>
 .iso-stage{touch-action:pan-y;cursor:pointer}
 .iso-stage:focus{outline:none}
 .iso-stage:focus-visible{outline:1px solid var(--anatomy-muted);outline-offset:6px}
+.em-focus [data-row]{opacity:.18;transition:opacity .3s var(--anatomy-ease)}
+.em-focus [data-row].em-in{opacity:1}
+.em-pick .iso-edge,.em-pick .iso-line{stroke:var(--anatomy-lit);stroke-width:1.6px}
+.em-pick .iso-top{fill:var(--anatomy-lit-top)}
+.em-guide{margin:40px 0 0;color:var(--anatomy-hi);font:14px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+.em-guide h2{margin:36px 0 10px;font:600 11px/1 var(--anatomy-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--anatomy-muted)}
+.em-guide p{margin:0 0 10px;color:var(--anatomy-muted)}
+.em-steps{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px;padding:0;list-style:none}
+.em-steps button,.em-guide input,.em-guide select{font:13px var(--anatomy-mono);color:var(--anatomy-hi);background:var(--anatomy-card);border:1px solid var(--anatomy-lo);border-radius:4px;padding:7px 10px;min-height:36px;min-width:0}
+.em-steps button{cursor:pointer}
+.em-steps button[aria-pressed="true"]{border-color:var(--anatomy-hi);box-shadow:inset 0 0 0 1px var(--anatomy-hi)}
+.em-out{min-height:3.2em;margin:0;padding:12px 14px;border-left:2px solid var(--anatomy-hi);background:var(--anatomy-card);font:13px/1.55 var(--anatomy-mono);color:var(--anatomy-hi)}
+.em-guide .em-out{color:var(--anatomy-hi)}
+.em-parts{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:2px 20px}
+.em-parts li{padding:7px 8px;border-radius:4px;cursor:default;outline:none}
+.em-parts li:hover,.em-parts li:focus-visible{background:var(--anatomy-card);box-shadow:0 0 0 1px var(--anatomy-lo)}
+.em-parts b,.em-list b{color:var(--anatomy-hi);font-weight:600}
+.em-parts span{color:var(--anatomy-muted)}
+.em-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:0 0 10px}
+.em-form label{display:flex;flex-direction:column;gap:4px;font:11px var(--anatomy-mono);color:var(--anatomy-muted);letter-spacing:.04em}
+.em-list{margin:0;padding-left:20px;color:var(--anatomy-muted)}
+.em-list li{margin:0 0 6px}
+.em-table{width:100%;border-collapse:collapse;font:13px var(--anatomy-mono)}
+.em-table th,.em-table td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--anatomy-faint)}
+.em-table th{color:var(--anatomy-muted);font-weight:400;width:42%}
+.em-table td{color:var(--anatomy-hi)}
 </style>`;
 
 const body =
@@ -508,6 +619,79 @@ const body =
     body: `<div class="iso-stage" tabindex="0" role="slider" aria-label="Energy meter: arrow keys set the load current, Space switches 1 second to 1 hour" aria-valuemin="0" aria-valuemax="${M.CT[0]}" aria-valuenow="${START_AMPS}">${svg}<span class="em-sr" role="status" aria-live="polite" data-status></span></div>`,
   });
 
+const PARTS = [
+  ["bars", "Bus bars L1, L2, L3, N", "carry the load current to the panel; N is neutral."],
+  ["ct", "External CTs, 400 : 5", "step the bar current down to 0–5 A (300 A in the bar is 3.75 A in the wire). Their two screws are S1 and S2."],
+  ["taps", "Voltage taps", "bring 230 V from each phase and from neutral."],
+  ["terminals", "Rear terminal block", "I1 I1′ I2 I2′ I3 I3′ take the CT loops, V1 V2 V3 VN take the voltages."],
+  ["leads", "Internal leads", "run from the terminals to the small CTs and the divider."],
+  ["toroids", "Internal CTs", "isolate the electronics and step 5 A down to milliamps."],
+  ["divider", "Resistor divider", "drops 230 V to a fraction of a volt the chip can measure."],
+  ["board", "Main board and traces", "copper tracks carry each signal; none cross."],
+  ["ic", "Metering IC", "samples V and I thousands of times a second and works out P = V × I × cos φ for all three phases."],
+  ["mcu", "MCU, crystal and EEPROM", "add power over time into Wh; the EEPROM keeps the total through a power cut, so it only goes up."],
+  ["psu", "Power supply", "a transformer and two capacitors that run the meter itself."],
+  ["display", "Header and display board", "carry the total up to the three LED rows behind the window."],
+  ["window", "Window", "Wh on top, the 8-digit energy across rows 2 and 3, K and M lamps, L1–L3 labels and the %A bar."],
+  ["keys", "Keys", "page between readings; INTG is the live total, OLD a frozen one from before a reset."],
+];
+const STEPS = ["1 · Top row is Wh?", "2 · Read row 2", "3 · Add row 3", "4 · K or M lamp", "5 · Convert to kWh"];
+
+const guide = `<section class="em-guide">
+<h2>Read it, step by step</h2>
+<p>The method from the energy-meter skill, done on the meter above. Each step holds the reading still and dims the rest of the window. Press the step again, or Escape, to let it count.</p>
+<ul class="em-steps">${STEPS.map((label, i) => `<li><button type="button" data-step="${i}" aria-pressed="false">${label}</button></li>`).join("")}</ul>
+<p class="em-out" data-step-out aria-live="polite">Pick a step: the reading is held, like a photo of the meter, while you look.</p>
+
+<h2>Every part</h2>
+<p>Point at a name and that part lights up in the drawing.</p>
+<ul class="em-parts">${PARTS.map(([key, title, text]) => `<li tabindex="0" data-pick="${key}"><b>${title}</b> <span>${text}</span></li>`).join("")}</ul>
+
+<h2>Decode your own reading</h2>
+<p>Type what the meter shows: row 2 exactly as it is, point included, and row 3 straight after.</p>
+<form class="em-form" data-decoder>
+<label>Top row<select name="top"><option>Wh</option><option>VAh</option><option>VARh</option></select></label>
+<label>Row 2<input name="row2" value="258.3" inputmode="decimal" autocomplete="off"></label>
+<label>Row 3<input name="row3" value="9468" inputmode="numeric" autocomplete="off"></label>
+<label>Lamp lit<select name="lamp"><option>M</option><option>K</option></select></label>
+<label>CT setting<select name="ratio"><option value="1">Ratio set in meter</option><option value="40">Meter 5/5, CT 200/5</option><option value="80">Meter 5/5, CT 400/5</option><option value="160">Meter 5/5, CT 800/5</option></select></label>
+<label>Previous kWh<input name="prev" inputmode="decimal" autocomplete="off" placeholder="optional"></label>
+<label>Tariff per unit<input name="tariff" inputmode="decimal" autocomplete="off" placeholder="optional"></label>
+</form>
+<p class="em-out" data-decoded aria-live="polite"></p>
+
+<h2>Read carefully</h2>
+<ul class="em-list">
+<li><b>Bright segments only.</b> Faint ones are unlit; in a dark or blurred photo they look like 2, 8 or 0. If you saw the meter in person, trust what you saw.</li>
+<li><b>The point matters.</b> 258.39468 MWh is not 2583.9968. Record digits, point and lamp together: the meter moves the point and switches K to M as the total grows.</li>
+<li><b>Wh, not VAh or VARh.</b> Only Wh is units. Average PF ≈ Wh ÷ VAh if you also read the VAh page.</li>
+<li><b>INTG or OLD.</b> INTG is live; OLD is frozen from before a reset.</li>
+<li><b>CT/PT ratio.</b> If the ratio is programmed, the display is already primary energy. If the meter is set to 5/5 on a 400/5 CT, multiply by 80.</li>
+<li><b>Consumption</b> = present − previous. <b>Average load</b> (kW) = kWh ÷ hours. <b>Cost</b> = kWh × tariff.</li>
+<li><b>Accuracy check:</b> % error = (meter − reference) ÷ reference × 100, against the class on the nameplate.</li>
+</ul>
+
+<h2>In simple words</h2>
+<ul class="em-list">
+<li>The meter is like a car's <b>odometer</b>: it shows all the electricity used so far and only goes up.</li>
+<li><b>1 unit = 1 kWh</b>, the same unit as the bill: about a 1-ton AC for an hour, a fan for 13–14 hours, a 10 W LED for 100 hours.</li>
+<li>Three rules: count only bright digits; see whether K or M is lit (M means × 1000 for units); make sure the top line says Wh.</li>
+</ul>
+
+<h2>Record it</h2>
+<table class="em-table" data-record>
+<tr><th>Make / model</th><td>As on the meter label, e.g. EM6400</td></tr>
+<tr><th>Display (rows 2 + 3)</th><td data-rec="display"></td></tr>
+<tr><th>Multiplier lamp</th><td data-rec="lamp"></td></tr>
+<tr><th>Reading</th><td data-rec="mwh"></td></tr>
+<tr><th>Reading in kWh</th><td data-rec="kwh"></td></tr>
+<tr><th>CT / PT ratio</th><td>___ / ___</td></tr>
+<tr><th>Date and time</th><td>___</td></tr>
+<tr><th>Remarks</th><td>___</td></tr>
+</table>
+<p>Write both MWh and kWh in a report so nobody mixes them up.</p>
+</section>`;
+
 const name = theme === "light" ? "energy-meter-light.html" : "energy-meter.html";
-writeFileSync(join(HERE, name), k.pageHtml({ title: "Energy meter", theme, body, script: kitScript() + live }));
+writeFileSync(join(HERE, name), k.pageHtml({ title: "Energy meter", theme, body: body + guide, script: kitScript() + live }));
 console.log("wrote", name);
